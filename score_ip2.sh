@@ -21,7 +21,7 @@ ALIAS=$1
 if grep -Eq "^iface .*:${ALIAS} inet dhcp" "$CFG"
 then
     echo "[PASS] Virtual Interface :$ALIAS DHCP"
-    score=$((score+10))
+    score=$((score+20))
 else
     echo "[FAIL] Virtual Interface :$ALIAS DHCP"
 fi
