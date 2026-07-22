@@ -1,44 +1,146 @@
 #!/bin/bash
+
 clear
+
 score=0
+CFG="/etc/network/interfaces"
 
 echo "================================================="
-echo "        Linux Networking Practice Checker"
+echo "      Guided Practice Checker - IP Address"
 echo "================================================="
 echo
 
-interfaces=($(ip -o link show | awk -F': ' '{print $2}' | grep -v '^lo$'))
+##############################################
+# CHECK DHCP
+##############################################
 
-echo "Pilih interface yang digunakan pada praktikum:"
-echo
-for i in "${!interfaces[@]}"; do
-  echo "[$((i+1))] ${interfaces[$i]}"
-done
-echo
-while true; do
-  read -p "Masukkan nomor interface : " pilih
-  if [[ "$pilih" =~ ^[0-9]+$ ]] && [ "$pilih" -ge 1 ] && [ "$pilih" -le "${#interfaces[@]}" ]; then
-    BASE="${interfaces[$((pilih-1))]}"
-    break
-  fi
-done
+check_dhcp(){
 
-check_ip(){
-  if ip addr show "$1" | grep -qw "$2"; then
-    printf "[PASS] %-10s -> %s\n" "$1" "$2"
+ALIAS=$1
+
+if grep -Eq "^iface .*:${ALIAS} inet dhcp" "$CFG"
+then
+    echo "[PASS] Virtual Interface :$ALIAS DHCP"
     score=$((score+20))
-  else
-    printf "[FAIL] %-10s -> %s\n" "$1" "$2"
-  fi
+else
+    echo "[FAIL] Virtual Interface :$ALIAS DHCP"
+fi
+
 }
 
-echo
-echo "Checking IP Address..."
-check_ip "$BASE" "192.168.10.10"
-check_ip "$BASE" "192.168.20.10"
-check_ip "$BASE" "172.16.10.10"
-check_ip "$BASE" "172.16.20.10"
-check_ip "$BASE" "10.10.10.10"
+##############################################
+# CHECK STATIC
+##############################################
+
+check_static(){
+
+ALIAS=$1
+IP=$2
+
+if grep -Eq "^iface .*:${ALIAS} inet static" "$CFG"
+then
+
+    if grep -A3 -E "^iface .*:${ALIAS} inet static" "$CFG" | grep -q "address $IP"
+    then
+        echo "[PASS] Virtual Interface :$ALIAS Static ($IP)"
+        score=$((score+20))
+    else
+        echo "[FAIL] Virtual Interface :$ALIAS IP Salah"
+    fi
+
+else
+
+    echo "[FAIL] Virtual Interface :$ALIAS Bukan Static"
+
+fi
+
+}
+
+##############################################
+# CHECKING
+##############################################
+
+check_dhcp 1
+check_static 2 "192.168.10.2"
+check_dhcp 3
+check_static 4 "172.16.20.2"
+check_dhcp 5
 
 echo
+echo "-------------------------------------------------"
 echo "Score : $score / 100"
+echo "-------------------------------------------------"
+echo
+
+echo "Achievements"
+
+[ $score -ge 20 ] && echo "✔ First Interface"
+[ $score -ge 40 ] && echo "✔ Interface Builder"
+[ $score -ge 60 ] && echo "✔ Network Explorer"
+[ $score -ge 80 ] && echo "✔ Linux Apprentice"
+[ $score -eq 100 ] && echo "★ Perfect Configuration"
+
+echo
+
+case $score in
+100)
+rank="A"
+title="Linux Networking Master"
+;;
+80)
+rank="B"
+title="Linux Administrator"
+;;
+60)
+rank="C"
+title="Junior Administrator"
+;;
+40)
+rank="D"
+title="Linux Beginner"
+;;
+*)
+rank="E"
+title="Need More Practice"
+;;
+esac
+
+echo "Rank  : $rank"
+echo "Title : $title"
+
+echo
+
+if [ $score -eq 100 ]
+then
+
+cat << EOF
+
+=========================================
+        MISSION COMPLETE
+=========================================
+
+Congratulations!
+
+You have successfully completed
+the Guided Practice.
+
+Reward:
++100 XP
+
+Next Mission:
+Unguided Practice (LOTS)
+
+EOF
+
+else
+
+echo "Mission Status : INCOMPLETE"
+
+echo
+echo "Hint:"
+echo "- Periksa kembali file /etc/network/interfaces."
+echo "- Pastikan interface :1, :3 dan :5 menggunakan DHCP."
+echo "- Pastikan interface :2 dan :4 menggunakan Static."
+echo "- Pastikan alamat IP sesuai dengan instruksi."
+
+fi
