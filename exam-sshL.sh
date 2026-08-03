@@ -31,10 +31,10 @@ fi
 if [ $# -ne 1 ]
 then
 echo
-echo "Usage : ./check.sh <nomor_soal>"
+echo "Usage : ./exam-sshL.sh <nomor_soal>"
 echo
 echo "Example :"
-echo "./check.sh 1"
+echo "./exam-sshL.sh 1"
 echo
 exit
 fi
