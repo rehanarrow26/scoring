@@ -8,6 +8,7 @@ clear
 
 SERVER_IP="192.168.10.2"
 SERVER_USER="developer"
+SERVER_PASSWORD="123"
 
 OLD_PORT="22"
 NEW_PORT="2222"
@@ -15,11 +16,27 @@ NEW_PORT="2222"
 score=0
 
 ########################################
+# CHECK SSHPASS
+########################################
+
+if ! command -v sshpass >/dev/null 2>&1
+then
+    echo
+    echo "sshpass belum terinstall."
+    echo
+    echo "Install terlebih dahulu:"
+    echo
+    echo "apt install sshpass -y"
+    echo
+    exit
+fi
+
+########################################
 # HEADER
 ########################################
 
 echo "========================================="
-echo "        SSH PORT CHECKER"
+echo "         SSH PORT CHECKER"
 echo "========================================="
 echo
 
@@ -58,7 +75,7 @@ fi
 # CHECK OLD PORT
 ########################################
 
-echo -n "Checking Old Port..............."
+echo -n "Checking Old Port................."
 
 if timeout 3 bash -c "</dev/tcp/$SERVER_IP/$OLD_PORT" 2>/dev/null
 then
@@ -73,7 +90,7 @@ fi
 # CHECK NEW PORT
 ########################################
 
-echo -n "Checking New Port..............."
+echo -n "Checking New Port................."
 
 if timeout 3 bash -c "</dev/tcp/$SERVER_IP/$NEW_PORT" 2>/dev/null
 then
@@ -87,15 +104,16 @@ fi
 # CHECK SSH LOGIN
 ########################################
 
-echo -n "Checking SSH Login.............."
+echo -n "Checking SSH Login..............."
 
-RESULT=$(ssh \
--p $NEW_PORT \
--o BatchMode=yes \
+RESULT=$(sshpass -p "$SERVER_PASSWORD" ssh \
+-p "$NEW_PORT" \
+-o PubkeyAuthentication=no \
+-o PreferredAuthentications=password \
 -o StrictHostKeyChecking=no \
 -o UserKnownHostsFile=/dev/null \
 -o ConnectTimeout=5 \
-$SERVER_USER@$SERVER_IP \
+"$SERVER_USER@$SERVER_IP" \
 echo OK 2>/dev/null)
 
 if [ "$RESULT" = "OK" ]
@@ -105,7 +123,7 @@ then
 else
     echo "[FAIL]"
     echo
-    echo "Tidak dapat login menggunakan port $NEW_PORT."
+    echo "Tidak dapat login melalui port $NEW_PORT."
 fi
 
 ########################################
