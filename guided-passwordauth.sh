@@ -49,7 +49,7 @@ echo
 
 echo -n "Checking PasswordAuthentication..."
 
-VALUE=$(REMOTE "sshd -T | grep '^passwordauthentication' | awk '{print \$2}'")
+VALUE=$(REMOTE "grep -Ei '^[[:space:]]*PasswordAuthentication' /etc/ssh/sshd_config | tail -1 | awk '{print tolower(\$2)}'")
 
 if [ "$VALUE" = "no" ]
 then
@@ -66,7 +66,7 @@ fi
 
 echo -n "Checking PubkeyAuthentication....."
 
-VALUE=$(REMOTE "sshd -T | grep '^pubkeyauthentication' | awk '{print \$2}'")
+VALUE=$(REMOTE "grep -Ei '^[[:space:]]*PubkeyAuthentication' /etc/ssh/sshd_config | tail -1 | awk '{print tolower(\$2)}'")
 
 if [ "$VALUE" = "yes" ]
 then
@@ -99,7 +99,7 @@ fi
 
 echo -n "Checking SSH Key Login..........."
 
-RESULT=$(REMOTE "echo OK")
+RESULT=$(REMOTE "echo OK" 2>/dev/null)
 
 if [ "$RESULT" = "OK" ]
 then
@@ -141,6 +141,7 @@ else
 fi
 
 fi
+
 ########################################
 # FINAL
 ########################################
