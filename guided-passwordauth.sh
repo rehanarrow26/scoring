@@ -49,7 +49,7 @@ echo
 
 echo -n "Checking PasswordAuthentication..."
 
-VALUE=$(REMOTE "grep -Ei '^[[:space:]]*PasswordAuthentication' /etc/ssh/sshd_config | awk '{print \$2}'")
+VALUE=$(REMOTE "sshd -T | grep '^passwordauthentication' | awk '{print \$2}'")
 
 if [ "$VALUE" = "no" ]
 then
@@ -57,7 +57,7 @@ then
     score=$((score+20))
 else
     echo "[FAIL]"
-    echo "Current : ${VALUE:-Not Set}"
+    echo "Current : ${VALUE:-Unknown}"
 fi
 
 ########################################
@@ -66,7 +66,7 @@ fi
 
 echo -n "Checking PubkeyAuthentication....."
 
-VALUE=$(REMOTE "grep -Ei '^[[:space:]]*PubkeyAuthentication' /etc/ssh/sshd_config | awk '{print \$2}'")
+VALUE=$(REMOTE "sshd -T | grep '^pubkeyauthentication' | awk '{print \$2}'")
 
 if [ "$VALUE" = "yes" ]
 then
@@ -74,7 +74,7 @@ then
     score=$((score+20))
 else
     echo "[FAIL]"
-    echo "Current : ${VALUE:-Not Set}"
+    echo "Current : ${VALUE:-Unknown}"
 fi
 
 ########################################
@@ -115,25 +115,32 @@ fi
 
 echo -n "Checking Password Login.........."
 
-RESULT=$(ssh \
+if ! command -v sshpass >/dev/null 2>&1
+then
+    echo "[FAIL]"
+    echo "sshpass belum terinstall."
+else
+
+RESULT=$(sshpass -p "123" ssh \
 -p "$SSH_PORT" \
 -o PubkeyAuthentication=no \
 -o PreferredAuthentications=password \
--o NumberOfPasswordPrompts=0 \
--o BatchMode=yes \
 -o StrictHostKeyChecking=no \
+-o UserKnownHostsFile=/dev/null \
 -o ConnectTimeout=5 \
-"$SERVER_USER@$SERVER_IP" true 2>&1)
+"$SERVER_USER@$SERVER_IP" \
+echo OK 2>/dev/null)
 
-if echo "$RESULT" | grep -qi "Permission denied"
+if [ "$RESULT" = "OK" ]
 then
-    echo "[PASS]"
-    score=$((score+25))
-else
     echo "[FAIL]"
     echo "Password Authentication masih aktif."
+else
+    echo "[PASS]"
+    score=$((score+25))
 fi
 
+fi
 ########################################
 # FINAL
 ########################################
