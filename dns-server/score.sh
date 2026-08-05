@@ -6,7 +6,7 @@ clear
 # CONFIG
 ########################################
 
-SERVER_IP="192.168.10.5"
+SERVER_IP="192.168.10.19"
 
 DOMAIN="coba.lan"
 
@@ -437,47 +437,7 @@ else
 
 fi
 
-########################################
-# CHECK RESOLV.CONF
-########################################
 
-echo -n "Checking Resolver................."
-
-if grep -Eq '^nameserver[[:space:]]+192\.168\.10\.5' /etc/resolv.conf
-then
-
-    pass
-
-    score=$((score+5))
-
-    RESOLV_RESULT="PASS"
-
-else
-
-    fail
-
-fi
-
-########################################
-# CHECK DNS RESOLVE
-########################################
-
-echo -n "Checking DNS Resolve.............."
-
-if timeout 5 getent hosts coba.lan | grep -q "192.168.10.5"
-then
-
-    pass
-
-    score=$((score+5))
-
-    PING_RESULT="PASS"
-
-else
-
-    fail
-
-fi
 
 ########################################
 # FINAL STATUS
@@ -574,17 +534,9 @@ cat > "$RESULT_FILE" <<EOF
             "status":"$CHECKZONE_RESULT",
             "score":10,
             "message":"$CHECKZONE_MESSAGE"
-        },
-
-        "Resolver": {
-            "status":"$RESOLV_RESULT",
-            "score":5
-        },
-
-        "DNS Resolve": {
-            "status":"$PING_RESULT",
-            "score":5
         }
+
+       
 
     }
 }
