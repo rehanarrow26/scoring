@@ -6,7 +6,7 @@ clear
 # CONFIG
 ########################################
 
-SERVER_IP="192.168.10.19"
+SERVER_IP="lms.teknolojia.my.id"
 
 DOMAIN="coba.lan"
 
@@ -423,7 +423,7 @@ then
 
     pass
 
-    score=$((score+10))
+    score=$((score+5))
 
     CHECKZONE_RESULT="PASS"
 
@@ -532,7 +532,7 @@ cat > "$RESULT_FILE" <<EOF
 
         "named-checkzone": {
             "status":"$CHECKZONE_RESULT",
-            "score":10,
+            "score":5,
             "message":"$CHECKZONE_MESSAGE"
         }
 
