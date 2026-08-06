@@ -6,7 +6,7 @@ clear
 # CONFIG
 ########################################
 
-API_URL="http://192.168.10.5:8000/api/lab/start"
+API_URL="http://lms.teknolojia.my.id/api/lab/start"
 
 CHAPTER_ID=6
 
