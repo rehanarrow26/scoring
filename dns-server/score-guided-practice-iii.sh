@@ -105,12 +105,10 @@ fi
 
 echo -n "Checking PTR 192.168.10.5........."
 
-RESULT=$(dig +short \
-    @192.168.10.5 \
-    -x 192.168.10.5 2>/dev/null |
-    sed 's/\.$//')
-
-if [ "$RESULT" = "dns-server-primary.sekolah.lan" ]; then
+if grep -Eq \
+'^[[:space:]]*5[[:space:]]+IN[[:space:]]+PTR[[:space:]]+dns-server-primary\.sekolah\.lan\.' \
+"$ZONE_FILE"
+then
     echo "[PASS]"
     C5="PASS"
     SCORE=$((SCORE+15))
@@ -118,18 +116,17 @@ else
     echo "[FAIL]"
 fi
 
+
 ########################################
 # 6. PTR 192.168.10.11
 ########################################
 
 echo -n "Checking PTR 192.168.10.11........"
 
-RESULT=$(dig +short \
-    @192.168.10.5 \
-    -x 192.168.10.11 2>/dev/null |
-    sed 's/\.$//')
-
-if [ "$RESULT" = "www.sekolah.lan" ]; then
+if grep -Eq \
+'^[[:space:]]*11[[:space:]]+IN[[:space:]]+PTR[[:space:]]+www\.sekolah\.lan\.' \
+"$ZONE_FILE"
+then
     echo "[PASS]"
     C6="PASS"
     SCORE=$((SCORE+10))
@@ -137,24 +134,24 @@ else
     echo "[FAIL]"
 fi
 
+
 ########################################
 # 7. PTR 192.168.10.12
 ########################################
 
 echo -n "Checking PTR 192.168.10.12........"
 
-RESULT=$(dig +short \
-    @192.168.10.5 \
-    -x 192.168.10.12 2>/dev/null |
-    sed 's/\.$//')
-
-if [ "$RESULT" = "lab.sekolah.lan" ]; then
+if grep -Eq \
+'^[[:space:]]*12[[:space:]]+IN[[:space:]]+PTR[[:space:]]+lab\.sekolah\.lan\.' \
+"$ZONE_FILE"
+then
     echo "[PASS]"
     C7="PASS"
     SCORE=$((SCORE+10))
 else
     echo "[FAIL]"
 fi
+
 
 ########################################
 # 8. NAMED CHECKCONF
