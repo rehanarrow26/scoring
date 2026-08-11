@@ -43,7 +43,13 @@ END_TIME=$(date +%s)
 
 DURATION=$((END_TIME - START_TIME))
 
-SCORE=$(grep -o '"score":[0-9]*' "$RESULT_FILE" | cut -d: -f2)
+if command -v jq >/dev/null 2>&1; then
+    SCORE=$(jq -r '.score // empty' "$RESULT_FILE")
+else
+    SCORE=$(grep -o '"score"[[:space:]]*:[[:space:]]*[0-9]*' "$RESULT_FILE" |
+        head -1 |
+        grep -o '[0-9]*$')
+fi
 
 if [ -z "$SCORE" ]; then
     echo "Score tidak ditemukan."
