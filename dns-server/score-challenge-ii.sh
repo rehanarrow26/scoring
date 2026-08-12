@@ -1,4 +1,3 @@
-```bash
 #!/bin/bash
 
 clear
@@ -558,4 +557,3 @@ else
 fi
 
 echo
-```
