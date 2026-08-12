@@ -80,9 +80,9 @@ DURATION=$((END_TIME - START_TIME))
 # READ SCORE
 ########################################
 
-SCORE=$(grep -o '"score":[0-9]*' "$RESULT_FILE" |
-    head -1 |
-    cut -d: -f2)
+SCORE=$(grep -o '"score"[[:space:]]*:[[:space:]]*[0-9]*' "$RESULT_FILE" |
+head -1 |
+grep -o '[0-9]*$')
 
 if [ -z "$SCORE" ]; then
     echo "Score tidak ditemukan."
