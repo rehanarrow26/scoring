@@ -43,13 +43,14 @@ check_file() {
 
 check_text() {
     local FILE="$1"
-    local TEXT="$2"
+    local PATTERN="$2"
 
     if [ ! -f "$FILE" ]; then
         return 1
     fi
 
-    timeout 3 grep -Fq "$TEXT" "$FILE" 2>/dev/null
+    # Menggunakan -Eq agar mendukung Regular Expression (\s+ untuk spasi/tab)
+    timeout 3 grep -Eq "$PATTERN" "$FILE" 2>/dev/null
 }
 
 check_zone() {
@@ -83,8 +84,8 @@ check_dns_ptr() {
 ########################################
 
 echo "========================================="
-echo "       DNS REVERSE ZONE CHECKER"
-echo "             CHAPTER 11"
+echo "        DNS REVERSE ZONE CHECKER"
+echo "               CHAPTER 11"
 echo "========================================="
 echo
 
@@ -127,8 +128,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking Reverse Zone.............."
 
-if check_text "/etc/bind/named.conf.local" \
-    "zone \"30.168.192.in-addr.arpa\""; then
+if check_text "/etc/bind/named.conf.local" "zone\s+\"30\.168\.192\.in-addr\.arpa\""; then
     pass_check 3
 else
     fail_check
@@ -144,8 +144,7 @@ fi
 
 echo -n "Checking PTR Record................"
 
-if check_text "$FILE1" \
-    "10      IN      PTR     server.akademik.lan."; then
+if check_text "$FILE1" "10\s+IN\s+PTR\s+server\.akademik\.lan\."; then
     pass_check 5
 else
     fail_check
@@ -165,8 +164,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking Reverse Zone.............."
 
-if check_text "/etc/bind/named.conf.local" \
-    "zone \"10.10.10.in-addr.arpa\""; then
+if check_text "/etc/bind/named.conf.local" "zone\s+\"10\.10\.10\.in-addr\.arpa\""; then
     pass_check 3
 else
     fail_check
@@ -182,8 +180,7 @@ fi
 
 echo -n "Checking PTR Record................"
 
-if check_text "$FILE2" \
-    "20      IN      PTR     server.lab.lan."; then
+if check_text "$FILE2" "20\s+IN\s+PTR\s+server\.lab\.lan\."; then
     pass_check 5
 else
     fail_check
@@ -203,8 +200,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking Reverse Zone.............."
 
-if check_text "/etc/bind/named.conf.local" \
-    "zone \"50.16.172.in-addr.arpa\""; then
+if check_text "/etc/bind/named.conf.local" "zone\s+\"50\.16\.172\.in-addr\.arpa\""; then
     pass_check 3
 else
     fail_check
@@ -220,8 +216,7 @@ fi
 
 echo -n "Checking PTR Record................"
 
-if check_text "$FILE3" \
-    "15      IN      PTR     library.perpus.lan."; then
+if check_text "$FILE3" "15\s+IN\s+PTR\s+library\.perpus\.lan\."; then
     pass_check 5
 else
     fail_check
@@ -241,8 +236,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking Reverse Zone.............."
 
-if check_text "/etc/bind/named.conf.local" \
-    "zone \"40.168.192.in-addr.arpa\""; then
+if check_text "/etc/bind/named.conf.local" "zone\s+\"40\.168\.192\.in-addr\.arpa\""; then
     pass_check 3
 else
     fail_check
@@ -258,8 +252,7 @@ fi
 
 echo -n "Checking PTR Record................"
 
-if check_text "$FILE4" \
-    "25      IN      PTR     lms.elearning.lan."; then
+if check_text "$FILE4" "25\s+IN\s+PTR\s+lms\.elearning\.lan\."; then
     pass_check 5
 else
     fail_check
@@ -279,8 +272,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking Reverse Zone.............."
 
-if check_text "/etc/bind/named.conf.local" \
-    "zone \"50.168.192.in-addr.arpa\""; then
+if check_text "/etc/bind/named.conf.local" "zone\s+\"50\.168\.192\.in-addr\.arpa\""; then
     pass_check 3
 else
     fail_check
@@ -296,8 +288,7 @@ fi
 
 echo -n "Checking PTR Record................"
 
-if check_text "$FILE5" \
-    "30      IN      PTR     grafana.monitor.lan."; then
+if check_text "$FILE5" "30\s+IN\s+PTR\s+grafana\.monitor\.lan\."; then
     pass_check 5
 else
     fail_check
@@ -317,8 +308,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking Reverse Zone.............."
 
-if check_text "/etc/bind/named.conf.local" \
-    "zone \"60.168.192.in-addr.arpa\""; then
+if check_text "/etc/bind/named.conf.local" "zone\s+\"60\.168\.192\.in-addr\.arpa\""; then
     pass_check 3
 else
     fail_check
@@ -334,8 +324,7 @@ fi
 
 echo -n "Checking Web PTR..................."
 
-if check_text "$FILE6" \
-    "10      IN      PTR     web.sekolah60.lan."; then
+if check_text "$FILE6" "10\s+IN\s+PTR\s+web\.sekolah60\.lan\."; then
     pass_check 5
 else
     fail_check
@@ -343,8 +332,7 @@ fi
 
 echo -n "Checking Database PTR.............."
 
-if check_text "$FILE6" \
-    "20      IN      PTR     database.sekolah60.lan."; then
+if check_text "$FILE6" "20\s+IN\s+PTR\s+database\.sekolah60\.lan\."; then
     pass_check 5
 else
     fail_check
@@ -364,8 +352,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking Reverse Zone.............."
 
-if check_text "/etc/bind/named.conf.local" \
-    "zone \"30.20.10.in-addr.arpa\""; then
+if check_text "/etc/bind/named.conf.local" "zone\s+\"30\.20\.10\.in-addr\.arpa\""; then
     pass_check 3
 else
     fail_check
@@ -381,8 +368,7 @@ fi
 
 echo -n "Checking Web PTR..................."
 
-if check_text "$FILE7" \
-    "10      IN      PTR     web.infra.lan."; then
+if check_text "$FILE7" "10\s+IN\s+PTR\s+web\.infra\.lan\."; then
     pass_check 4
 else
     fail_check
@@ -390,8 +376,7 @@ fi
 
 echo -n "Checking Mail PTR.................."
 
-if check_text "$FILE7" \
-    "20      IN      PTR     mail.infra.lan."; then
+if check_text "$FILE7" "20\s+IN\s+PTR\s+mail\.infra\.lan\."; then
     pass_check 4
 else
     fail_check
@@ -399,8 +384,7 @@ fi
 
 echo -n "Checking Backup PTR................"
 
-if check_text "$FILE7" \
-    "30      IN      PTR     backup.infra.lan."; then
+if check_text "$FILE7" "30\s+IN\s+PTR\s+backup\.infra\.lan\."; then
     pass_check 4
 else
     fail_check
@@ -453,9 +437,7 @@ echo "-----------------------------------------"
 
 echo -n "Checking PTR 192.168.30.10........."
 
-if check_dns_ptr \
-    "192.168.30.10" \
-    "server.akademik.lan."; then
+if check_dns_ptr "192.168.30.10" "server.akademik.lan."; then
     pass_check 2
 else
     fail_check
@@ -463,9 +445,7 @@ fi
 
 echo -n "Checking PTR 10.10.10.20............"
 
-if check_dns_ptr \
-    "10.10.10.20" \
-    "server.lab.lan."; then
+if check_dns_ptr "10.10.10.20" "server.lab.lan."; then
     pass_check 2
 else
     fail_check
@@ -473,9 +453,7 @@ fi
 
 echo -n "Checking PTR 172.16.50.15..........."
 
-if check_dns_ptr \
-    "172.16.50.15" \
-    "library.perpus.lan."; then
+if check_dns_ptr "172.16.50.15" "library.perpus.lan."; then
     pass_check 2
 else
     fail_check
@@ -483,9 +461,7 @@ fi
 
 echo -n "Checking PTR 192.168.40.25..........."
 
-if check_dns_ptr \
-    "192.168.40.25" \
-    "lms.elearning.lan."; then
+if check_dns_ptr "192.168.40.25" "lms.elearning.lan."; then
     pass_check 2
 else
     fail_check
@@ -493,9 +469,7 @@ fi
 
 echo -n "Checking PTR 192.168.50.30..........."
 
-if check_dns_ptr \
-    "192.168.50.30" \
-    "grafana.monitor.lan."; then
+if check_dns_ptr "192.168.50.30" "grafana.monitor.lan."; then
     pass_check 2
 else
     fail_check
@@ -503,9 +477,7 @@ fi
 
 echo -n "Checking PTR 192.168.60.10..........."
 
-if check_dns_ptr \
-    "192.168.60.10" \
-    "web.sekolah60.lan."; then
+if check_dns_ptr "192.168.60.10" "web.sekolah60.lan."; then
     pass_check 2
 else
     fail_check
@@ -513,9 +485,7 @@ fi
 
 echo -n "Checking PTR 192.168.60.20..........."
 
-if check_dns_ptr \
-    "192.168.60.20" \
-    "database.sekolah60.lan."; then
+if check_dns_ptr "192.168.60.20" "database.sekolah60.lan."; then
     pass_check 2
 else
     fail_check
@@ -523,9 +493,7 @@ fi
 
 echo -n "Checking PTR 10.20.30.10............."
 
-if check_dns_ptr \
-    "10.20.30.10" \
-    "web.infra.lan."; then
+if check_dns_ptr "10.20.30.10" "web.infra.lan."; then
     pass_check 2
 else
     fail_check
@@ -533,9 +501,7 @@ fi
 
 echo -n "Checking PTR 10.20.30.20............."
 
-if check_dns_ptr \
-    "10.20.30.20" \
-    "mail.infra.lan."; then
+if check_dns_ptr "10.20.30.20" "mail.infra.lan."; then
     pass_check 2
 else
     fail_check
@@ -543,9 +509,7 @@ fi
 
 echo -n "Checking PTR 10.20.30.30............."
 
-if check_dns_ptr \
-    "10.20.30.30" \
-    "backup.infra.lan."; then
+if check_dns_ptr "10.20.30.30" "backup.infra.lan."; then
     pass_check 2
 else
     fail_check
