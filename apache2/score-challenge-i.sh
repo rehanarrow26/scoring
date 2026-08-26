@@ -63,10 +63,22 @@ fi
 # 3. Cek Config Virtual Host (20 Poin)
 conf_passed=0
 for sub in "${subdomains[@]}"; do
-    conf="/etc/apache2/sites-available/${sub}.smk.lan.conf"
-    if grep -Eq "ServerName\s+${sub}\.smk\.lan" "$conf" 2>/dev/null && \
-       grep -Eq "DocumentRoot\s+/var/www/html/${sub}\.smk\.lan" "$conf" 2>/dev/null; then
-        conf_passed=$((conf_passed + 1))
+    # Mengecek berkas [subdomain].smk.lan.conf atau [subdomain].conf
+    conf1="/etc/apache2/sites-available/${sub}.smk.lan.conf"
+    conf2="/etc/apache2/sites-available/${sub}.conf"
+    
+    target_conf=""
+    if [ -f "$conf1" ]; then
+        target_conf="$conf1"
+    elif [ -f "$conf2" ]; then
+        target_conf="$conf2"
+    fi
+
+    if [ -n "$target_conf" ]; then
+        if grep -Eq "ServerName\s+${sub}\.smk\.lan" "$target_conf" 2>/dev/null && \
+           grep -Eq "DocumentRoot\s+/var/www/html/${sub}\.smk\.lan" "$target_conf" 2>/dev/null; then
+            conf_passed=$((conf_passed + 1))
+        fi
     fi
 done
 
@@ -80,8 +92,9 @@ fi
 # 4. Cek Symlink Enabled Sites (10 Poin)
 enabled_passed=0
 for sub in "${subdomains[@]}"; do
-    link="/etc/apache2/sites-enabled/${sub}.smk.lan.conf"
-    if [ -L "$link" ]; then
+    link1="/etc/apache2/sites-enabled/${sub}.smk.lan.conf"
+    link2="/etc/apache2/sites-enabled/${sub}.conf"
+    if [ -L "$link1" ] || [ -L "$link2" ]; then
         enabled_passed=$((enabled_passed + 1))
     fi
 done
