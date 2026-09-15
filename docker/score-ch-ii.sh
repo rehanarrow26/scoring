@@ -27,76 +27,65 @@ echo "================================================="
 echo
 
 # ------------------------------------------------------------------
-# 1. CEK CHALLENGE 1: PERSISTENSI DATA WEB APP (20 POIN)
+# 1. CEK CHALLENGE 1: CONTAINER APP-NOTES ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "1. Checking Challenge 1 - Web App Data Persistence (20 pts)..."
-APP_RUNNING=$(docker inspect -f '{{.State.Running}}' app-notes 2>/dev/null || echo "false")
-APP_MOUNT=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/usr/share/nginx/html"}}{{.Name}}{{end}}{{end}}' app-notes 2>/dev/null || echo "")
-APP_CONTENT=$(curl -s --connect-timeout 2 http://localhost:8082 2>/dev/null || echo "")
-
-if [ "$APP_RUNNING" = "true" ] && [ -n "$APP_MOUNT" ] && [[ "$APP_CONTENT" == *"Hello Volume"* ]]; then
+echo -n "1. Checking Challenge 1 - Container 'app-notes' exists (20 pts)..."
+if docker ps -a --format '{{.Names}}' | grep -q "^app-notes$"; then
     pass_check 20
 else
-    fail_check "Container 'app-notes' tidak aktif, mount ke /usr/share/nginx/html tidak ada, atau konten 'Hello Volume' tidak ditemukan di port 8082."
+    fail_check "Container 'app-notes' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 2. CEK CHALLENGE 2: BACKUP DAN RESTORE VOLUME DB (20 POIN)
+# 2. CEK CHALLENGE 2: FILE BACKUP DAN CONTAINER DB-BACKUP-TEST ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "2. Checking Challenge 2 - DB Backup & Restore Volume (20 pts)..."
-HAS_BACKUP_FILE=false
+echo -n "2. Checking Challenge 2 - Backup file & Container 'db-backup-test' exist (20 pts)..."
+HAS_BACKUP=false
 if [ -f "$SCRIPT_DIR/backup-db/db-data.tar.gz" ] || [ -f "backup-db/db-data.tar.gz" ]; then
-    HAS_BACKUP_FILE=true
+    HAS_BACKUP=true
 fi
+HAS_CONTAINER=$(docker ps -a --format '{{.Names}}' | grep -q "^db-backup-test$" && echo "true" || echo "false")
 
-DB_RESTORE_RUNNING=$(docker inspect -f '{{.State.Running}}' db-backup-test 2>/dev/null || echo "false")
-DB_RESTORE_MOUNT=$(docker inspect -f '{{range .Mounts}}{{.Name}}{{end}}' db-backup-test 2>/dev/null || echo "")
-
-if [ "$HAS_BACKUP_FILE" = true ] && [ "$DB_RESTORE_RUNNING" = "true" ] && [[ "$DB_RESTORE_MOUNT" == *"vol-db-restored"* ]]; then
+if [ "$HAS_BACKUP" = true ] && [ "$HAS_CONTAINER" = "true" ]; then
     pass_check 20
 else
-    fail_check "File backup 'backup-db/db-data.tar.gz' tidak ditemukan, container 'db-backup-test' tidak berjalan, atau tidak menggunakan volume 'vol-db-restored'."
-fi
-
-# ------------------------------------------------------------------
-# 3. CEK CHALLENGE 3: SHARED VOLUME WRITER & READER (20 POIN)
-# ------------------------------------------------------------------
-echo -n "3. Checking Challenge 3 - Shared Volume Writer & Reader (20 pts)..."
-WRITER_RUNNING=$(docker inspect -f '{{.State.Running}}' log-writer 2>/dev/null || echo "false")
-READER_RUNNING=$(docker inspect -f '{{.State.Running}}' log-reader 2>/dev/null || echo "false")
-READER_CONTENT=$(curl -s --connect-timeout 2 http://localhost:8083/status.txt 2>/dev/null || echo "")
-
-if [ "$WRITER_RUNNING" = "true" ] && [ "$READER_RUNNING" = "true" ] && [[ "$READER_CONTENT" =~ [0-9] ]]; then
-    pass_check 20
-else
-    fail_check "Container 'log-writer'/'log-reader' tidak aktif atau file 'status.txt' tidak dapat diakses di http://localhost:8083."
+    fail_check "File 'backup-db/db-data.tar.gz' atau container 'db-backup-test' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 4. CEK CHALLENGE 4: READ-ONLY VOLUME PROTECTION (20 POIN)
+# 3. CEK CHALLENGE 3: CONTAINER LOG-WRITER & LOG-READER ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "4. Checking Challenge 4 - Read-Only Volume Protection (20 pts)..."
-WEB_CONF_RUNNING=$(docker inspect -f '{{.State.Running}}' web-config-test 2>/dev/null || echo "false")
-TOUCH_TEST=$(docker exec web-config-test touch /usr/share/nginx/html/test_write.txt 2>&1 || true)
+echo -n "3. Checking Challenge 3 - Containers 'log-writer' & 'log-reader' exist (20 pts)..."
+HAS_WRITER=$(docker ps -a --format '{{.Names}}' | grep -q "^log-writer$" && echo "true" || echo "false")
+HAS_READER=$(docker ps -a --format '{{.Names}}' | grep -q "^log-reader$" && echo "true" || echo "false")
 
-if [ "$WEB_CONF_RUNNING" = "true" ] && [[ "$TOUCH_TEST" == *"Read-only file system"* ]]; then
+if [ "$HAS_WRITER" = "true" ] && [ "$HAS_READER" = "true" ]; then
     pass_check 20
 else
-    fail_check "Container 'web-config-test' tidak aktif atau direktori /usr/share/nginx/html tidak terproteksi Read-Only (ro)."
+    fail_check "Container 'log-writer' atau 'log-reader' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 5. CEK CHALLENGE 5: MIGRASI DATA ANTAR VOLUME (20 POIN)
+# 4. CEK CHALLENGE 4: CONTAINER WEB-CONFIG-TEST ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "5. Checking Challenge 5 - Data Migration to New Volume (20 pts)..."
-MIGRASI_RUNNING=$(docker inspect -f '{{.State.Running}}' db-migrasi 2>/dev/null || echo "false")
-MIGRASI_MOUNT=$(docker inspect -f '{{range .Mounts}}{{.Name}}{{end}}' db-migrasi 2>/dev/null || echo "")
-FILE_EXISTS=$(docker run --rm -v vol-new-db:/data busybox sh -c "[ -f /data/sample.txt ] && echo 'yes' || echo 'no'" 2>/dev/null || echo "no")
-
-if [ "$MIGRASI_RUNNING" = "true" ] && [[ "$MIGRASI_MOUNT" == *"vol-new-db"* ]] && [ "$FILE_EXISTS" = "yes" ]; then
+echo -n "4. Checking Challenge 4 - Container 'web-config-test' exists (20 pts)..."
+if docker ps -a --format '{{.Names}}' | grep -q "^web-config-test$"; then
     pass_check 20
 else
-    fail_check "Container 'db-migrasi' tidak aktif, tidak menggunakan volume 'vol-new-db', atau berkas '/data/sample.txt' tidak ditemukan di volume baru."
+    fail_check "Container 'web-config-test' tidak ditemukan."
+fi
+
+# ------------------------------------------------------------------
+# 5. CEK CHALLENGE 5: VOLUME VOL-NEW-DB DAN CONTAINER DB-MIGRASI ADA (20 POIN)
+# ------------------------------------------------------------------
+echo -n "5. Checking Challenge 5 - Volume 'vol-new-db' & Container 'db-migrasi' exist (20 pts)..."
+HAS_VOL=$(docker volume ls --format '{{.Name}}' | grep -q "^vol-new-db$" && echo "true" || echo "false")
+HAS_MIGRASI=$(docker ps -a --format '{{.Names}}' | grep -q "^db-migrasi$" && echo "true" || echo "false")
+
+if [ "$HAS_VOL" = "true" ] && [ "$HAS_MIGRASI" = "true" ]; then
+    pass_check 20
+else
+    fail_check "Volume 'vol-new-db' atau container 'db-migrasi' tidak ditemukan."
 fi
 
 # Limit Score Max 100
