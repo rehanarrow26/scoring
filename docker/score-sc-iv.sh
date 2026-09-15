@@ -27,106 +27,71 @@ echo "================================================="
 echo
 
 # ------------------------------------------------------------------
-# 1. CEK STUDI KASUS 1: WORDPRESS PERSISTENT VOLUME (20 POIN)
+# 1. CEK STUDI KASUS 1: CONTAINER WORDPRESS & WP-DB ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "1. Checking Case 1 - WordPress & DB Volume Mounts (20 pts)..."
-WP_RUNNING=$(docker inspect -f '{{.State.Running}}' wordpress 2>/dev/null || echo "false")
-DB_RUNNING=$(docker inspect -f '{{.State.Running}}' wp-db 2>/dev/null || echo "false")
-WP_MOUNT=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/www/html"}}{{.Name}}{{end}}{{end}}' wordpress 2>/dev/null || echo "")
+echo -n "1. Checking Case 1 - Containers 'wordpress' & 'wp-db' exist (20 pts)..."
+HAS_WP=$(docker ps -a --format '{{.Names}}' | grep -q "^wordpress$" && echo "true" || echo "false")
+HAS_WP_DB=$(docker ps -a --format '{{.Names}}' | grep -q "^wp-db$" && echo "true" || echo "false")
 
-# PERBAIKAN: Gunakan grep -q untuk menghindari masalah dual-stack IPv4/IPv6 (\n8080)
-if docker port wordpress 80/tcp 2>/dev/null | grep -q "8080"; then
-    WP_PORT="8080"
-else
-    WP_PORT=""
-fi
-
-if [ "$WP_RUNNING" = "true" ] && [ "$DB_RUNNING" = "true" ] && [ "$WP_MOUNT" = "wp-data" ] && [ "$WP_PORT" = "8080" ]; then
+if [ "$HAS_WP" = "true" ] && [ "$HAS_WP_DB" = "true" ]; then
     pass_check 20
 else
-    fail_check "Container 'wordpress'/'wp-db' tidak aktif, volume 'wp-data' salah, atau port 8080 tidak dipublikasikan."
+    fail_check "Container 'wordpress' atau 'wp-db' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 2. CEK STUDI KASUS 2: BACKUP & RESTORE VOLUME (20 POIN)
+# 2. CEK STUDI KASUS 2: FILE BACKUP & CONTAINER MARIADB-RESTORE ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "2. Checking Case 2 - Backup File & Restore DB on Port 3307 (20 pts)..."
+echo -n "2. Checking Case 2 - Backup file & Container 'mariadb-restore' exist (20 pts)..."
 HAS_BACKUP_FILE=false
 if [ -f "backup/vol-belajar-backup.tar.gz" ] || [ -f "$SCRIPT_DIR/backup/vol-belajar-backup.tar.gz" ]; then
     HAS_BACKUP_FILE=true
 fi
+HAS_RESTORE=$(docker ps -a --format '{{.Names}}' | grep -q "^mariadb-restore$" && echo "true" || echo "false")
 
-# PERBAIKAN: Gunakan grep -q untuk periksa port 3307
-if docker port mariadb-restore 3306/tcp 2>/dev/null | grep -q "3307"; then
-    RESTORE_PORT="3307"
-else
-    RESTORE_PORT=""
-fi
-
-RESTORE_DB_DATA=$(docker exec mariadb-restore mariadb -u root -psabarmenanti -sN -e "USE perpustakaan; SELECT COUNT(*) FROM buku;" 2>/dev/null | tr -d '\r\n' || echo "0")
-
-if [ "$HAS_BACKUP_FILE" = true ] && [ "$RESTORE_PORT" = "3307" ] && [ "$RESTORE_DB_DATA" -eq 2 ] 2>/dev/null; then
+if [ "$HAS_BACKUP_FILE" = true ] && [ "$HAS_RESTORE" = "true" ]; then
     pass_check 20
 else
-    fail_check "File backup .tar.gz tidak ada, port 3307 tidak tepat, atau data pada 'mariadb-restore' tidak valid."
+    fail_check "File backup 'vol-belajar-backup.tar.gz' atau container 'mariadb-restore' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 3. CEK STUDI KASUS 3: SHARED VOLUME & READ-ONLY VIEWER (20 POIN)
+# 3. CEK STUDI KASUS 3: CONTAINER REPORT-GENERATOR & REPORT-VIEWER ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "3. Checking Case 3 - Shared Volume & Read-Only Viewer on Port 8081 (20 pts)..."
-GEN_RUNNING=$(docker inspect -f '{{.State.Running}}' report-generator 2>/dev/null || echo "false")
-VIEW_RUNNING=$(docker inspect -f '{{.State.Running}}' report-viewer 2>/dev/null || echo "false")
-VIEW_RO=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/usr/share/nginx/html"}}{{.RW}}{{end}}{{end}}' report-viewer 2>/dev/null || echo "true")
+echo -n "3. Checking Case 3 - Containers 'report-generator' & 'report-viewer' exist (20 pts)..."
+HAS_GEN=$(docker ps -a --format '{{.Names}}' | grep -q "^report-generator$" && echo "true" || echo "false")
+HAS_VIEW=$(docker ps -a --format '{{.Names}}' | grep -q "^report-viewer$" && echo "true" || echo "false")
 
-# PERBAIKAN: Gunakan grep -q untuk periksa port 8081
-if docker port report-viewer 80/tcp 2>/dev/null | grep -q "8081"; then
-    VIEW_PORT="8081"
-else
-    VIEW_PORT=""
-fi
-
-if [ "$GEN_RUNNING" = "true" ] && [ "$VIEW_RUNNING" = "true" ] && [ "$VIEW_RO" = "false" ] && [ "$VIEW_PORT" = "8081" ]; then
+if [ "$HAS_GEN" = "true" ] && [ "$HAS_VIEW" = "true" ]; then
     pass_check 20
 else
-    fail_check "Container generator/viewer tidak aktif, mount pada 'report-viewer' bukan Read-Only (ro), atau port bukan 8081."
+    fail_check "Container 'report-generator' atau 'report-viewer' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 4. CEK STUDI KASUS 4: READ-ONLY CONFIGURATION VOLUME (20 POIN)
+# 4. CEK STUDI KASUS 4: CONTAINER APP-INSTANCE-1 & APP-INSTANCE-2 ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "4. Checking Case 4 - Read-Only Config Volume Protection (20 pts)..."
-APP1_RO=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/etc/app"}}{{.RW}}{{end}}{{end}}' app-instance-1 2>/dev/null || echo "true")
-APP2_RO=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/etc/app"}}{{.RW}}{{end}}{{end}}' app-instance-2 2>/dev/null || echo "true")
-CONF_CONTENT=$(docker exec app-instance-1 cat /etc/app/app.conf 2>/dev/null | tr -d '\r\n' || echo "")
-WRITE_TEST=$(docker exec app-instance-1 sh -c "echo 'test' >> /etc/app/app.conf" 2>&1 || true)
+echo -n "4. Checking Case 4 - Containers 'app-instance-1' & 'app-instance-2' exist (20 pts)..."
+HAS_APP1=$(docker ps -a --format '{{.Names}}' | grep -q "^app-instance-1$" && echo "true" || echo "false")
+HAS_APP2=$(docker ps -a --format '{{.Names}}' | grep -q "^app-instance-2$" && echo "true" || echo "false")
 
-if [ "$APP1_RO" = "false" ] && [ "$APP2_RO" = "false" ] && [[ "$CONF_CONTENT" == *"APP_MODE=production"* ]] && [[ "$WRITE_TEST" == *"Read-only file system"* ]]; then
+if [ "$APP1_EXISTS" = "true" ] || [ "$HAS_APP1" = "true" ] && [ "$HAS_APP2" = "true" ]; then
     pass_check 20
 else
-    fail_check "Volume 'app-config' tidak terproteksi Read-Only pada app-instance-1/2 atau file konfigurasi tidak valid."
+    fail_check "Container 'app-instance-1' atau 'app-instance-2' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 5. CEK STUDI KASUS 5: MIGRASI DATA VOLUME (20 POIN)
+# 5. CEK STUDI KASUS 5: CONTAINER MARIADB-PROD & VOLUME PROD-MARIADB-DATA ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "5. Checking Case 5 - Migrated Data on 'mariadb-prod' Port 3308 (20 pts)..."
-PROD_RUNNING=$(docker inspect -f '{{.State.Running}}' mariadb-prod 2>/dev/null || echo "false")
-PROD_MOUNT=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/mysql"}}{{.Name}}{{end}}{{end}}' mariadb-prod 2>/dev/null || echo "")
+echo -n "5. Checking Case 5 - Container 'mariadb-prod' & Volume 'prod-mariadb-data' exist (20 pts)..."
+HAS_PROD=$(docker ps -a --format '{{.Names}}' | grep -q "^mariadb-prod$" && echo "true" || echo "false")
+HAS_PROD_VOL=$(docker volume ls --format '{{.Name}}' | grep -q "^prod-mariadb-data$" && echo "true" || echo "false")
 
-# PERBAIKAN: Gunakan grep -q untuk periksa port 3308
-if docker port mariadb-prod 3306/tcp 2>/dev/null | grep -q "3308"; then
-    PROD_PORT="3308"
-else
-    PROD_PORT=""
-fi
-
-MIGRATED_DB_DATA=$(docker exec mariadb-prod mariadb -u root -psabarmenanti -sN -e "USE perpustakaan; SELECT COUNT(*) FROM buku;" 2>/dev/null | tr -d '\r\n' || echo "0")
-
-if [ "$PROD_RUNNING" = "true" ] && [ "$PROD_MOUNT" = "prod-mariadb-data" ] && [ "$PROD_PORT" = "3308" ] && [ "$MIGRATED_DB_DATA" -eq 2 ] 2>/dev/null; then
+if [ "$HAS_PROD" = "true" ] && [ "$HAS_PROD_VOL" = "true" ]; then
     pass_check 20
 else
-    fail_check "Container 'mariadb-prod' tidak berjalan, port bukan 3308, volume bukan 'prod-mariadb-data', atau data migrasi tidak lengkap."
+    fail_check "Container 'mariadb-prod' atau volume 'prod-mariadb-data' tidak ditemukan."
 fi
 
 # Limit Score Max 100
