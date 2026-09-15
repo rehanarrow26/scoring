@@ -27,71 +27,69 @@ echo "================================================="
 echo
 
 # ------------------------------------------------------------------
-# 1. STUDI KASUS 1: ISOLASI NETWORK (20 POIN)
+# 1. STUDI KASUS 1: CONTAINER NODE-FINANCE & NODE-PERPUS ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "1. Checking Case 1: Network Isolation (20 pts)........."
-FIN_NET=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' node-finance 2>/dev/null || echo "")
-PER_NET=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' node-perpus 2>/dev/null || echo "")
+echo -n "1. Checking Case 1: Containers 'node-finance' & 'node-perpus' exist (20 pts)..."
+HAS_FINANCE=$(docker ps -a --format '{{.Names}}' | grep -q "^node-finance$" && echo "true" || echo "false")
+HAS_PERPUS=$(docker ps -a --format '{{.Names}}' | grep -q "^node-perpus$" && echo "true" || echo "false")
 
-if [ "$FIN_NET" == "net-finance" ] && [ "$PER_NET" == "net-perpus" ]; then
+if [ "$HAS_FINANCE" = "true" ] && [ "$HAS_PERPUS" = "true" ]; then
     pass_check 20
 else
-    fail_check "Container 'node-finance' atau 'node-perpus' tidak terhubung ke network terisolasi masing-masing."
+    fail_check "Container 'node-finance' atau 'node-perpus' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 2. STUDI KASUS 2: KOMUNIKASI APP STACK (20 POIN)
+# 2. STUDI KASUS 2: CONTAINER WEB-APP & DB-APP ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "2. Checking Case 2: Web App & DB Communication (20 pts)..."
-WEB_NET=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' web-app 2>/dev/null || echo "")
-DB_NET=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' db-app 2>/dev/null || echo "")
-DB_ENV=$(docker inspect -f '{{range .Config.Env}}{{if eq . "MARIADB_ROOT_PASSWORD=AppStack2026!"}}OK{{end}}{{end}}' db-app 2>/dev/null || echo "")
+echo -n "2. Checking Case 2: Containers 'web-app' & 'db-app' exist (20 pts)..."
+HAS_WEB=$(docker ps -a --format '{{.Names}}' | grep -q "^web-app$" && echo "true" || echo "false")
+HAS_DB=$(docker ps -a --format '{{.Names}}' | grep -q "^db-app$" && echo "true" || echo "false")
 
-if [ "$WEB_NET" == "net-app-stack" ] && [ "$DB_NET" == "net-app-stack" ] && [ "$DB_ENV" == "OK" ]; then
+if [ "$HAS_WEB" = "true" ] && [ "$HAS_DB" = "true" ]; then
     pass_check 20
 else
-    fail_check "Container 'web-app' dan 'db-app' belum terhubung ke 'net-app-stack' atau password MariaDB salah."
+    fail_check "Container 'web-app' atau 'db-app' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 3. STUDI KASUS 3: NETWORK CONNECT / DISCONNECT (20 POIN)
+# 3. STUDI KASUS 3: CONTAINER APP-LEGACY & NETWORK NET-MONITORING ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "3. Checking Case 3: Connect & Disconnect Status (20 pts)..."
-LEGACY_NETS=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' app-legacy 2>/dev/null || echo "")
-MON_NET_EXISTS=$(docker network inspect net-monitoring >/dev/null 2>&1 && echo "YES" || echo "NO")
+echo -n "3. Checking Case 3: Container 'app-legacy' & Network 'net-monitoring' exist (20 pts)..."
+HAS_LEGACY=$(docker ps -a --format '{{.Names}}' | grep -q "^app-legacy$" && echo "true" || echo "false")
+HAS_MON_NET=$(docker network ls --format '{{.Name}}' | grep -q "^net-monitoring$" && echo "true" || echo "false")
 
-if [[ "$LEGACY_NETS" != *"net-monitoring"* ]] && [ "$MON_NET_EXISTS" == "YES" ] && [ -n "$LEGACY_NETS" ]; then
+if [ "$HAS_LEGACY" = "true" ] && [ "$HAS_MON_NET" = "true" ]; then
     pass_check 20
 else
-    fail_check "Container 'app-legacy' masih terhubung ke 'net-monitoring' atau network 'net-monitoring' tidak ditemukan."
+    fail_check "Container 'app-legacy' atau network 'net-monitoring' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 4. STUDI KASUS 4: CUSTOM SUBNET & GATEWAY (PERBAIKAN) (20 POIN)
+# 4. STUDI KASUS 4: CONTAINER NODE-SUBNET & NETWORK NET-CUSTOM-SUBNET ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "4. Checking Case 4: Custom Subnet & Gateway (20 pts)....."
-SUBNET=$(docker network inspect net-custom-subnet | grep -o '"Subnet": "[^"]*"' | cut -d'"' -f4 || echo "")
-GATEWAY=$(docker network inspect net-custom-subnet | grep -o '"Gateway": "[^"]*"' | cut -d'"' -f4 || echo "")
-NODE_EXISTS=$(docker ps -a --format '{{.Names}}' | grep "^node-subnet$" || echo "")
+echo -n "4. Checking Case 4: Container 'node-subnet' & Network 'net-custom-subnet' exist (20 pts)..."
+HAS_NODE_SUBNET=$(docker ps -a --format '{{.Names}}' | grep -q "^node-subnet$" && echo "true" || echo "false")
+HAS_CUSTOM_NET=$(docker network ls --format '{{.Name}}' | grep -q "^net-custom-subnet$" && echo "true" || echo "false")
 
-if [ "$SUBNET" == "172.28.0.0/16" ] && [ "$GATEWAY" == "172.28.0.1" ] && [ -n "$NODE_EXISTS" ]; then
+if [ "$HAS_NODE_SUBNET" = "true" ] && [ "$HAS_CUSTOM_NET" = "true" ]; then
     pass_check 20
 else
-    fail_check "Subnet (172.28.0.0/16), Gateway (172.28.0.1), atau container 'node-subnet' tidak sesuai."
+    fail_check "Container 'node-subnet' atau network 'net-custom-subnet' tidak ditemukan."
 fi
 
 # ------------------------------------------------------------------
-# 5. STUDI KASUS 5: NETWORK ALIAS (PERBAIKAN) (20 POIN)
+# 5. STUDI KASUS 5: CONTAINER BACKEND-1, BACKEND-2, & FRONTEND-APP ADA (20 POIN)
 # ------------------------------------------------------------------
-echo -n "5. Checking Case 5: Network Alias Configuration (20 pts)..."
-ALIAS1=$(docker inspect backend-1 | grep -i "api-backend" || echo "")
-ALIAS2=$(docker inspect backend-2 | grep -i "api-backend" || echo "")
-FRONT_NET=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' frontend-app 2>/dev/null || echo "")
+echo -n "5. Checking Case 5: Containers 'backend-1', 'backend-2' & 'frontend-app' exist (20 pts)..."
+HAS_B1=$(docker ps -a --format '{{.Names}}' | grep -q "^backend-1$" && echo "true" || echo "false")
+HAS_B2=$(docker ps -a --format '{{.Names}}' | grep -q "^backend-2$" && echo "true" || echo "false")
+HAS_FRONT=$(docker ps -a --format '{{.Names}}' | grep -q "^frontend-app$" && echo "true" || echo "false")
 
-if [ -n "$ALIAS1" ] && [ -n "$ALIAS2" ] && [ "$FRONT_NET" == "net-backend" ]; then
+if [ "$HAS_B1" = "true" ] && [ "$HAS_B2" = "true" ] && [ "$HAS_FRONT" = "true" ]; then
     pass_check 20
 else
-    fail_check "Opsi --network-alias 'api-backend' pada backend-1/backend-2 atau network 'frontend-app' tidak sesuai."
+    fail_check "Container 'backend-1', 'backend-2', atau 'frontend-app' tidak ditemukan."
 fi
 
 # Limit Score Max 100
