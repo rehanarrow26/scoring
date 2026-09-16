@@ -1,0 +1,104 @@
+#!/bin/bash
+# ================================================================
+# AUTOMATED GRADER: CHAPTER 54 (ARG vs ENV)
+# Total Max Score: 100 Pts
+# ================================================================
+
+clear
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RESULT_FILE="$SCRIPT_DIR/../result.json"
+TARGET_DIR="/root/images"
+DOCKERFILE="$TARGET_DIR/Dockerfile"
+
+score=0
+
+pass_check() {
+    echo -e "\e[32m[PASS]\e[0m"
+    score=$((score + $1))
+}
+
+fail_check() {
+    local reason="$1"
+    echo -e "\e[31m[FAIL]\e[0m"
+    echo -e "    \e[33m└─> Alasan: $reason\e[0m"
+}
+
+echo "================================================="
+echo "  GRADER: CHAPTER 54 (ARG vs ENV)"
+echo "================================================="
+echo
+
+# 1. CEK DEKLARASI ARG PADA DOCKERFILE (25 POIN)
+echo -n "Step 1: Memeriksa instruksi ARG (BUILD_ENV & APP_VERSION_BUILD) pada Dockerfile (25 pts)..."
+if [ -f "$DOCKERFILE" ]; then
+    HAS_ARG_ENV=$(grep -E "^\s*ARG\s+BUILD_ENV=" "$DOCKERFILE" || echo "")
+    HAS_ARG_VER=$(grep -E "^\s*ARG\s+APP_VERSION_BUILD=" "$DOCKERFILE" || echo "")
+    HAS_ENV_FORWARD=$(grep -E "^\s*ENV\s+APP_VERSION=\\$APP_VERSION_BUILD" "$DOCKERFILE" || echo "")
+
+    if [ -n "$HAS_ARG_ENV" ] && [ -n "$HAS_ARG_VER" ] && [ -n "$HAS_ENV_FORWARD" ]; then
+        pass_check 25
+    else
+        fail_check "Dockerfile tidak memuat ARG BUILD_ENV, ARG APP_VERSION_BUILD, atau penerusan ENV APP_VERSION=\$APP_VERSION_BUILD."
+    fi
+else
+    fail_check "Berkas $DOCKERFILE tidak ditemukan."
+fi
+
+# 2. CEK KEBERADAAN IMAGE & HASIL PENULISAN BUILD-INFO.TXT (25 POIN)
+echo -n "Step 2: Memeriksa keberadaan image sederhana:latest & isi build-info.txt (25 pts)..."
+IMAGE_EXISTS=$(docker images -q sederhana:latest 2>/dev/null || echo "")
+
+if [ -n "$IMAGE_EXISTS" ]; then
+    BUILD_INFO_OUT=$(docker run --rm --entrypoint cat sederhana:latest build-info.txt 2>/dev/null | tr -d '\r' || echo "")
+    if [[ "$BUILD_INFO_OUT" == *"Build environment:"* ]]; then
+        pass_check 25
+    else
+        fail_check "Berkas build-info.txt tidak ditemukan atau isinya tidak sesuai."
+    fi
+else
+    fail_check "Image sederhana:latest belum dibangun."
+fi
+
+# 3. VERIFIKASI SIFAT ARG (TIDAK TERSIMPAN DI RUNTIME ENV IMAGE) (25 POIN)
+echo -n "Step 3: Memastikan ARG BUILD_ENV tidak bocor ke runtime Config.Env (25 pts)..."
+ENV_INSPECT=$(docker inspect sederhana:latest --format '{{.Config.Env}}' 2>/dev/null || echo "")
+
+if [[ "$ENV_INSPECT" != *"BUILD_ENV"* ]]; then
+    pass_check 25
+else
+    fail_check "BUILD_ENV terdeteksi di Config.Env (ARG seharusnya tidak tersimpan sebagai runtime env)."
+fi
+
+# 4. CEK PENERUSAN ARG KE ENV RUNTIME (25 POIN)
+echo -n "Step 4: Memeriksa penerusan ARG APP_VERSION_BUILD ke ENV APP_VERSION pada runtime (25 pts)..."
+RUNTIME_ENV_VAL=$(docker run --rm --entrypoint sh sederhana:latest -c 'echo $APP_VERSION' 2>/dev/null | tr -d '\r' || echo "")
+
+if [ -n "$RUNTIME_ENV_VAL" ]; then
+    pass_check 25
+else
+    fail_check "Environment variable APP_VERSION tidak bernilai saat container berjalan."
+fi
+
+# Limit Max Score 100
+[ "$score" -gt 100 ] && score=100
+
+echo
+echo "================================================="
+if [ "$score" -eq 100 ]; then
+    echo -e "\e[32mMISSION COMPLETE! Total Score: $score/100\e[0m"
+    status="PASS"
+else
+    echo -e "\e[31mMISSION INCOMPLETE. Total Score: $score/100\e[0m"
+    status="FAIL"
+fi
+echo "================================================="
+
+# Menulis Luaran JSON untuk Sistem Scoring Lab
+mkdir -p "$(dirname "$RESULT_FILE")"
+cat > "$RESULT_FILE" <<EOF
+{
+  "chapter_id": "lab-docker-arg-env-ch54",
+  "score": $score,
+  "status": "$status"
+}
+EOF
