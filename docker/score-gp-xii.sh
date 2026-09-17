@@ -1,6 +1,6 @@
 #!/bin/bash
 # ================================================================
-# AUTOMATED GRADER: CHAPTER 49 (ARG INSTRUCTION) - FIXED
+# AUTOMATED GRADER: CHAPTER 49 (ARG INSTRUCTION)
 # Total Max Score: 100 Pts
 # ================================================================
 
@@ -33,7 +33,8 @@ echo -n "Step 1: Memeriksa instruksi ARG (BUILD_ENV & APP_VERSION_BUILD) pada Do
 if [ -f "$DOCKERFILE" ]; then
     HAS_ARG_ENV=$(grep -E "^\s*ARG\s+BUILD_ENV" "$DOCKERFILE" || echo "")
     HAS_ARG_VER=$(grep -E "^\s*ARG\s+APP_VERSION_BUILD" "$DOCKERFILE" || echo "")
-    HAS_ENV_PASS=$(grep -E "ENV\s+APP_VERSION=\\$APP_VERSION_BUILD|ENV\s+APP_VERSION=\"?\\$APP_VERSION_BUILD\"?" "$DOCKERFILE" || echo "")
+    # Menggunakan regex aman tanpa trailing backslash
+    HAS_ENV_PASS=$(grep -E "ENV\s+APP_VERSION\s*=\s*\"?\\\${?APP_VERSION_BUILD}?\"?" "$DOCKERFILE" || echo "")
 
     if [ -n "$HAS_ARG_ENV" ] && [ -n "$HAS_ARG_VER" ] && [ -n "$HAS_ENV_PASS" ]; then
         pass_check 25
