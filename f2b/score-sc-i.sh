@@ -50,13 +50,18 @@ fi
 
 # 3. CEK CASE 3: MYSQL BIND-ADDRESS 0.0.0.0 & JAIL MYSQLD-AUTH (25 POIN)
 echo -n "Step 3: Validating Case 3 (MariaDB bind 0.0.0.0 & mysqld-auth jail) (25 pts)..."
-MYSQL_BIND_OK=$(ss -tlnp | grep -E "0\.0\.0\.0:3306" || echo "")
+
+# Memeriksa baris bind-address=0.0.0.0 di file konfigurasi utama MariaDB/MySQL
+MYSQL_CONF="/etc/mysql/mariadb.conf.d/50-server.cnf"
+[ ! -f "$MYSQL_CONF" ] && MYSQL_CONF="/etc/mysql/my.cnf"
+
+MYSQL_BIND_OK=$(grep -E "^\s*bind-address\s*=\s*0\.0\.0\.0" "$MYSQL_CONF" 2>/dev/null || echo "")
 JAIL_MYSQL_OK=$(fail2ban-client status mysqld-auth 2>/dev/null | grep -F "192.168.10.23" || echo "")
 
 if [ -n "$MYSQL_BIND_OK" ] && [ -n "$JAIL_MYSQL_OK" ]; then
     pass_check 25
 else
-    fail_check "MariaDB belum bind ke 0.0.0.0:3306 atau IP 192.168.10.23 tidak ter-ban di jail mysqld-auth."
+    fail_check "Konfigurasi bind-address di $MYSQL_CONF belum 0.0.0.0 atau IP 192.168.10.23 tidak ter-ban di jail mysqld-auth."
 fi
 
 # 4. CEK CASE 4: JAIL RECIDIVE & REPEAT OFFENDER (25 POIN)
