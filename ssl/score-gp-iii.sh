@@ -72,24 +72,24 @@ else
     fail_check "Berkas konfigurasi $VHOST_CONF atau symlink di sites-enabled tidak ditemukan."
 fi
 
-# 4. CEK HTTP TO HTTPS REDIRECT (15 POIN)
-echo -n "Step 4: Memeriksa HTTP ke HTTPS Redirect (HTTP 301) (15 pts)..."
-REDIRECT_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: secure-nginx.smk.lan" http://127.0.0.1/ || echo "000")
+# 4. CEK HTTP TO HTTPS REDIRECT VIA DOMAIN / BIND9 (15 POIN)
+echo -n "Step 4: Memeriksa HTTP ke HTTPS Redirect via domain secure-nginx.smk.lan (15 pts)..."
+REDIRECT_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://secure-nginx.smk.lan/ || echo "000")
 
-if [ "$REDIRECT_CODE" -eq 301 ]; then
+if [ "$REDIRECT_CODE" -eq 301 ] || [ "$REDIRECT_CODE" -eq 302 ]; then
     pass_check 15
 else
-    fail_check "HTTP ke HTTPS Redirect tidak merespons HTTP 301 (Mendapatkan HTTP Code: $REDIRECT_CODE)."
+    fail_check "Redirect HTTP ke HTTPS gagal (Mendapatkan HTTP Code: $REDIRECT_CODE). Pastikan Bind9 aktif dan meresolve 'secure-nginx.smk.lan'."
 fi
 
-# 5. CEK RESPON KONEKSI HTTPS / SSL HANDSHAKE NGINX (20 POIN)
-echo -n "Step 5: Memeriksa respon HTTPS port 443 pada Nginx (20 pts)..."
-SSL_RESP=$(curl -k -s -o /dev/null -w "%{http_code}" -H "Host: secure-nginx.smk.lan" https://127.0.0.1/ || echo "000")
+# 5. CEK RESPON KONEKSI HTTPS VIA DOMAIN / BIND9 (20 POIN)
+echo -n "Step 5: Memeriksa koneksi HTTPS via domain secure-nginx.smk.lan (20 pts)..."
+SSL_RESP=$(curl -k -s -o /dev/null -w "%{http_code}" https://secure-nginx.smk.lan/ || echo "000")
 
-if [ "$SSL_RESP" -eq 200 ] || [ "$SSL_RESP" -eq 301 ] || [ "$SSL_RESP" -eq 302 ]; then
+if [ "$SSL_RESP" -eq 200 ]; then
     pass_check 20
 else
-    fail_check "Koneksi HTTPS Nginx ke https://127.0.0.1/ gagal (HTTP Code: $SSL_RESP)."
+    fail_check "Koneksi HTTPS ke https://secure-nginx.smk.lan/ gagal (HTTP Code: $SSL_RESP)."
 fi
 
 # Limit Max Score 100
