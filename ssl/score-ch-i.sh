@@ -65,15 +65,15 @@ check_challenge_item() {
         return
     fi
 
-    # Check Unauth Response (HTTP 401)
-    UNAUTH_CODE=$(curl -k -s -o /dev/null -w "%{http_code}" -H "Host: $DOMAIN" https://127.0.0.1/ || echo "000")
+    # Check Unauth Response (HTTP 401) via Domain
+    UNAUTH_CODE=$(curl -k -s -o /dev/null -w "%{http_code}" "https://$DOMAIN/" || echo "000")
     if [ "$UNAUTH_CODE" -ne 401 ]; then
         fail_check "Akses HTTPS tanpa autentikasi ke $DOMAIN tidak menghasilkan HTTP 401 (Respon: $UNAUTH_CODE)."
         return
     fi
 
-    # Check Auth Response (HTTP 200)
-    AUTH_CODE=$(curl -k -s -o /dev/null -w "%{http_code}" -H "Host: $DOMAIN" -u "$USER:$PASS" https://127.0.0.1/ || echo "000")
+    # Check Auth Response (HTTP 200) via Domain
+    AUTH_CODE=$(curl -k -s -o /dev/null -w "%{http_code}" -u "$USER:$PASS" "https://$DOMAIN/" || echo "000")
     if [ "$AUTH_CODE" -ne 200 ]; then
         fail_check "Login HTTPS ke $DOMAIN dengan user '$USER' gagal (Respon: $AUTH_CODE)."
         return
