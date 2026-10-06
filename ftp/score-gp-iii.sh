@@ -6,7 +6,7 @@
 
 clear
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RESULT_FILE="$SCRIPT_DIR/../../result.json"
+RESULT_FILE="$SCRIPT_DIR/../result.json"
 
 score=0
 
