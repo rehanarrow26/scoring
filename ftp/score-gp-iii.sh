@@ -82,12 +82,12 @@ fi
 
 # 4. CEK PAKET MOD-CRYPTO & STATUS LAYANAN PROFTPD (25 Pts)
 echo -n "Step 4: Memeriksa Paket proftpd-mod-crypto & Status Layanan (25 pts)..."
-if dpkg -l | grep -q "^ii  proftpd-mod-crypto"; then
-    PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running" && echo "active" || echo "inactive")
-    if [ "$PROFTPD_ACT" = "active" ]; then
+if dpkg -l | grep -E '^ii[[:space:]]+proftpd-mod-crypto' >/dev/null 2>&1; then
+    if systemctl is-active --quiet proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running"; then
         pass_check 25
     else
-        fail_check "Paket proftpd-mod-crypto terinstall tetapi layanan ProFTPD tidak aktif."
+        PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || echo "inactive")
+        fail_check "Paket proftpd-mod-crypto terinstall tetapi layanan ProFTPD tidak aktif (Status: $PROFTPD_ACT)."
     fi
 else
     fail_check "Paket proftpd-mod-crypto belum terinstall di sistem."
