@@ -37,11 +37,13 @@ fi
 
 # 2. CEK INSTALASI & STATUS PROFTPD (20 Pts)
 echo -n "Step 2: Memeriksa Instalasi & Status Layanan ProFTPD (20 pts)..."
-if dpkg -l | grep -q "^ii  proftpd"; then
-    PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running" && echo "active" || echo "inactive")
-    if [ "$PROFTPD_ACT" = "active" ]; then
+# Cek apakah paket proftpd terinstall (bisa proftpd-basic, proftpd-core, atau proftpd)
+if dpkg -l | grep -E '^ii[[:space:]]+proftpd' >/dev/null 2>&1; then
+    # Pengecekan status service yang presisi
+    if systemctl is-active --quiet proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running"; then
         pass_check 20
     else
+        PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || echo "inactive")
         fail_check "Paket proftpd terinstall tetapi layanannya tidak aktif (Status: $PROFTPD_ACT)."
     fi
 else
