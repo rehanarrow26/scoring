@@ -29,7 +29,8 @@ echo
 # 1. CEK USER DAN GROUP (25 Pts)
 echo -n "Step 1: Memeriksa User (webadmin, webdev1, webdev2) & Group (webdev) (25 pts)..."
 if id "webadmin" &>/dev/null && id "webdev1" &>/dev/null && id "webdev2" &>/dev/null; then
-    if getent group webdev | grep -qE "\bwebdev1\b" && getent group webdev | grep -qE "\bwebdev2\b"; then
+    # Cek membership group baik via secondary group maupun primary group
+    if id -nG webdev1 | grep -qw "webdev" && id -nG webdev2 | grep -qw "webdev"; then
         pass_check 25
     else
         fail_check "User webdev1 atau webdev2 belum dimasukkan ke dalam group 'webdev'."
@@ -61,7 +62,7 @@ echo -n "Step 3: Memeriksa Konfigurasi Multiple DefaultRoot di proftpd.conf (30 
 CONF_FILE="/etc/proftpd/proftpd.conf"
 
 if [ -f "$CONF_FILE" ]; then
-    # Pastikan DefaultRoot global (~ atau /) disatukan atau di-comment agar tidak menimpa per-user
+    # Pastikan DefaultRoot global (~ atau /) di-comment / tidak aktif
     ROOT_GLOBAL_ACTIVE=$(grep -v '^[[:space:]]*#' "$CONF_FILE" | grep -E '^[[:space:]]*DefaultRoot[[:space:]]+~' >/dev/null && echo "yes" || echo "no")
     
     # Cek DefaultRoot khusus
@@ -83,8 +84,20 @@ fi
 
 # 4. CEK STATUS LAYANAN PROFTPD & APACHE2 (20 Pts)
 echo -n "Step 4: Memeriksa Status Layanan ProFTPD & Apache2 (20 pts)..."
-PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running" && echo "active" || echo "inactive")
-APACHE_ACT=$(systemctl is-active apache2 2>/dev/null || service apache2 status 2>/dev/null | grep -q "running" && echo "active" || echo "inactive")
+
+# Pengecekan status ProFTPD
+if systemctl is-active --quiet proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running"; then
+    PROFTPD_ACT="active"
+else
+    PROFTPD_ACT="inactive"
+fi
+
+# Pengecekan status Apache2
+if systemctl is-active --quiet apache2 2>/dev/null || service apache2 status 2>/dev/null | grep -q "running"; then
+    APACHE_ACT="active"
+else
+    APACHE_ACT="inactive"
+fi
 
 if [ "$PROFTPD_ACT" = "active" ] && [ "$APACHE_ACT" = "active" ]; then
     pass_check 20
