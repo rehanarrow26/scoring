@@ -31,7 +31,6 @@ echo -n "Step 1: Memeriksa Sertifikat SSL/PEM di /etc/ssl/private/proftpd.pem (2
 PEM_FILE="/etc/ssl/private/proftpd.pem"
 
 if [ -f "$PEM_FILE" ]; then
-    # Memastikan file berisi sertifikat X.509 dan Private Key yang valid
     if grep -q "BEGIN CERTIFICATE" "$PEM_FILE" && grep -q "PRIVATE KEY" "$PEM_FILE"; then
         pass_check 25
     else
@@ -59,7 +58,7 @@ else
 fi
 
 # 3. CEK KONFIGURASI TLS.CONF (25 Pts)
-echo -n "Step 3: Memeriksa Direktori & Pengaturan di /etc/proftpd/tls.conf (25 pts)..."
+echo -n "Step 3: Memeriksa Pengaturan di /etc/proftpd/tls.conf (25 pts)..."
 TLS_CONF="/etc/proftpd/tls.conf"
 
 if [ -f "$TLS_CONF" ]; then
@@ -80,17 +79,22 @@ else
     fail_check "Berkas $TLS_CONF tidak ditemukan."
 fi
 
-# 4. CEK PAKET MOD-CRYPTO & STATUS LAYANAN PROFTPD (25 Pts)
-echo -n "Step 4: Memeriksa Paket proftpd-mod-crypto & Status Layanan (25 pts)..."
-if dpkg -l | grep -E '^ii[[:space:]]+proftpd-mod-crypto' >/dev/null 2>&1; then
-    if systemctl is-active --quiet proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running"; then
+# 4. CEK PAKET & STATUS LAYANAN PROFTPD (25 Pts)
+echo -n "Step 4: Memeriksa Paket Modul & Status Layanan ProFTPD (25 pts)..."
+# Cek paket proftpd-mod-crypto ATAU proftpd-basic
+PKG_CHECK=$(dpkg -l | grep -E '^ii[[:space:]]+proftpd-(mod-crypto|basic|core)' >/dev/null 2>&1 && echo "yes" || echo "no")
+
+if [ "$PKG_CHECK" = "yes" ]; then
+    # Cek proses berjalan via systemctl, service, atau pgrep/pidof
+    if systemctl is-active --quiet proftpd 2>/dev/null || \
+       service proftpd status 2>/dev/null | grep -qiE "running|active" || \
+       pgrep -x proftpd >/dev/null 2>&1; then
         pass_check 25
     else
-        PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || echo "inactive")
-        fail_check "Paket proftpd-mod-crypto terinstall tetapi layanan ProFTPD tidak aktif (Status: $PROFTPD_ACT)."
+        fail_check "Paket terinstall tetapi proses/layanan ProFTPD tidak terdeteksi berjalan."
     fi
 else
-    fail_check "Paket proftpd-mod-crypto belum terinstall di sistem."
+    fail_check "Paket proftpd / proftpd-mod-crypto belum terinstall di sistem."
 fi
 
 # Limit Max Score 100
