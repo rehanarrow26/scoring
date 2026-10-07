@@ -29,7 +29,8 @@ echo
 # 1. CEK USER DAN GROUP (20 Pts)
 echo -n "Step 1: Memeriksa User (webdesign1, logo1, logo2) & Group (logo) (20 pts)..."
 if id "webdesign1" &>/dev/null && id "logo1" &>/dev/null && id "logo2" &>/dev/null; then
-    if getent group logo | grep -qE "\blogo1\b" && getent group logo | grep -qE "\blogo2\b"; then
+    # Cek membership group baik via secondary group maupun primary group
+    if id -nG logo1 | grep -qw "logo" && id -nG logo2 | grep -qw "logo"; then
         pass_check 20
     else
         fail_check "User 'logo1' atau 'logo2' belum terdaftar di dalam group 'logo'."
@@ -46,7 +47,6 @@ LOGO_DIR="/srv/ftp/logo"
 if [ -d "$WEB_DIR" ] && [ -d "$LOGO_DIR" ]; then
     WEB_OWNER=$(stat -c "%U" "$WEB_DIR")
     LOGO_GROUP=$(stat -c "%G" "$LOGO_DIR")
-    LOGO_PERM=$(stat -c "%a" "$LOGO_DIR")
 
     if [ "$WEB_OWNER" = "webdesign1" ] && [ "$LOGO_GROUP" = "logo" ]; then
         pass_check 20
@@ -100,11 +100,15 @@ fi
 
 # 5. CEK STATUS LAYANAN PROFTPD (20 Pts)
 echo -n "Step 5: Memeriksa Status Layanan ProFTPD (20 pts)..."
-PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || service proftpd status 2>/dev/null | grep -q "running" && echo "active" || echo "inactive")
 
-if [ "$PROFTPD_ACT" = "active" ]; then
+# Pengecekan proses berjalan via systemctl, service, pgrep, atau pidof
+if systemctl is-active --quiet proftpd 2>/dev/null || \
+   service proftpd status 2>/dev/null | grep -qiE "running|active" || \
+   pgrep -x proftpd >/dev/null 2>&1 || \
+   pidof proftpd >/dev/null 2>&1; then
     pass_check 20
 else
+    PROFTPD_ACT=$(systemctl is-active proftpd 2>/dev/null || echo "inactive")
     fail_check "Layanan ProFTPD tidak aktif (Status: $PROFTPD_ACT)."
 fi
 
